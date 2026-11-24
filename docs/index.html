@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Запис на манікюр</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="demo-banner" class="demo" hidden>Демо-режим: дані вигадані, нічого нікуди не відправляється</div>
+
+  <header class="hero">
+    <h1 id="title">Запис на манікюр</h1>
+    <p id="subtitle">Оберіть послугу, майстра та зручний час</p>
+  </header>
+
+  <main class="card">
+    <ol class="steps" id="steps" hidden>
+      <li data-s="1">Послуга</li><li data-s="2">Час</li><li data-s="3">Дані</li>
+    </ol>
+
+    <div id="loading" class="state">Завантаження…</div>
+    <div id="error" class="state err" hidden></div>
+
+    <!-- Крок 1: послуга і майстер -->
+    <section id="step1" hidden>
+      <h2>Що робимо?</h2>
+      <div id="services" class="list"></div>
+      <h2>До кого?</h2>
+      <div id="masters" class="chips"></div>
+      <button id="to2" class="primary" disabled>Далі</button>
+    </section>
+
+    <!-- Крок 2: дата і час -->
+    <section id="step2" hidden>
+      <button class="back" data-back="1">← Назад</button>
+      <div id="summary2" class="note"></div>
+      <h2>Оберіть день</h2>
+      <div id="days" class="chips scroll"></div>
+      <h2>Вільний час</h2>
+      <div id="times" class="times"></div>
+      <div id="nodays" class="state" hidden>Найближчим часом вільних місць немає. Спробуйте іншого майстра або зателефонуйте нам.</div>
+      <button id="to3" class="primary" disabled>Далі</button>
+    </section>
+
+    <!-- Крок 3: дані -->
+    <section id="step3" hidden>
+      <button class="back" data-back="2">← Назад</button>
+      <div id="summary3" class="note"></div>
+      <form id="form" novalidate>
+        <label>Ім’я<input id="f-name" autocomplete="name" maxlength="60"><span class="fe" id="e-name"></span></label>
+        <label>Телефон<input id="f-phone" type="tel" autocomplete="tel" placeholder="+380 50 123 45 67" maxlength="20"><span class="fe" id="e-phone"></span></label>
+        <label>Пошта <small>(необов’язково, надішлемо підтвердження)</small><input id="f-email" type="email" autocomplete="email" maxlength="120"><span class="fe" id="e-email"></span></label>
+        <label>Побажання <small>(необов’язково)</small><textarea id="f-comment" rows="2" maxlength="500"></textarea></label>
+        <input id="f-website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <p class="consent">Натискаючи «Записатися», ви погоджуєтесь на обробку імені й телефону лише для цього запису.</p>
+        <button id="submit" class="primary" type="submit">Записатися</button>
+      </form>
+    </section>
+
+    <!-- Готово -->
+    <section id="done" hidden>
+      <div class="ok">✓</div>
+      <h2>Ви записані!</h2>
+      <div id="doneInfo" class="note big"></div>
+      <p>Щоб скасувати запис, збережіть це посилання:</p>
+      <input id="cancelLink" readonly>
+      <button id="copy" class="secondary">Скопіювати посилання</button>
+      <button id="again" class="secondary">Записатися ще раз</button>
+    </section>
+
+    <!-- Скасування за посиланням -->
+    <section id="cancelBox" hidden>
+      <h2>Скасування запису</h2>
+      <div id="cancelInfo" class="note big"></div>
+      <button id="cancelBtn" class="primary danger">Скасувати запис</button>
+    </section>
+  </main>
+
+  <footer class="foot">Демо-проєкт для портфоліо · вигаданий салон</footer>
+
+  <script src="core.js"></script>
+  <script src="config.js"></script>
+  <script src="demo.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
