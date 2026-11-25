@@ -99,6 +99,28 @@ var CORE = (function () {
     return out;
   }
 
+  /**
+   * Несколько услуг за один визит: 's1,s3' → одна «составная» услуга (названия через «+», время и цена складываются).
+   * Возвращает {ids, name, durationMin, price} или null, если что-то не так (неизвестная услуга, больше 4).
+   */
+  function combineServices(list, idsStr) {
+    var want = String(idsStr === undefined || idsStr === null ? '' : idsStr).split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    var uniq = want.filter(function (id, i) { return want.indexOf(id) === i; });
+    if (!uniq.length || uniq.length > 4) return null;
+    var picked = [];
+    for (var i = 0; i < uniq.length; i++) {
+      var s = list.filter(function (x) { return x.id === uniq[i]; })[0];
+      if (!s) return null;
+      picked.push(s);
+    }
+    return {
+      ids: picked.map(function (s) { return s.id; }).join(','),
+      name: picked.map(function (s) { return s.name; }).join(' + '),
+      durationMin: picked.reduce(function (a, s) { return a + s.durationMin; }, 0),
+      price: picked.reduce(function (a, s) { return a + s.price; }, 0)
+    };
+  }
+
   /** Что можно показывать на сайте (без календарей и почты мастеров). */
   function publicMasters(masters) {
     return masters.map(function (m) { return { id: m.id, name: m.name }; });
@@ -216,7 +238,7 @@ var CORE = (function () {
 
   return {
     DEFAULTS: DEFAULTS, parseSettings: parseSettings, parseMasters: parseMasters, parseServices: parseServices,
-    publicMasters: publicMasters, fmt: fmt, hm: hm, isoWeekday: isoWeekday, addDays: addDays, validDay: validDay,
+    publicMasters: publicMasters, combineServices: combineServices, fmt: fmt, hm: hm, isoWeekday: isoWeekday, addDays: addDays, validDay: validDay,
     availableDays: availableDays, masterFree: masterFree, freeTimes: freeTimes, pickMaster: pickMaster,
     normalizePhone: normalizePhone, formatPhone: formatPhone, cleanText: cleanText, sanitizeCell: sanitizeCell,
     escapeHtml: escapeHtml, validateClient: validateClient, decideAttempt: decideAttempt

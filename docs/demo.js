@@ -44,7 +44,7 @@ window.DEMO_API = (function () {
     return o;
   }
   function later(v) { return new Promise(function (res) { setTimeout(function () { res(v); }, 250); }); }
-  function service(id) { return services.filter(function (s) { return s.id === String(id); })[0]; }
+  function service(ids) { return CORE.combineServices(services, ids); }   // 's1,s3' → одна составная услуга
   function masterName(id) { return masters.filter(function (m) { return m.id === id; })[0].name; }
 
   return {

@@ -75,5 +75,16 @@ t('много попыток → shadow', CORE.decideAttempt(0, 6), 'shadow');
 // Услуги: неактивные не показываем
 t('услуги', CORE.parseServices([['s1', 'Манікюр', '60', '450', 'так'], ['s2', 'Старе', '30', '100', 'ні']]).map(s => s.id), ['s1']);
 
+// Несколько услуг за визит
+const sv = CORE.parseServices([['s1', 'Манікюр', '60', '450', 'так'], ['s2', 'Гель-лак', '60', '250', 'так'], ['s3', 'Педикюр', '90', '700', 'так']]);
+const combo = CORE.combineServices(sv, 's1,s3');
+t('две услуги: время складывается', combo.durationMin, 150);
+t('две услуги: цена складывается', combo.price, 1150);
+t('две услуги: название', combo.name, 'Манікюр + Педикюр');
+t('неизвестная услуга', CORE.combineServices(sv, 's1,zzz'), null);
+t('пустой выбор', CORE.combineServices(sv, ''), null);
+t('повторы убираются', CORE.combineServices(sv, 's1,s1').durationMin, 60);
+t('больше 4 нельзя', CORE.combineServices(sv, 's1,s2,s3,s1x,s9'), null);
+
 document.title = fail ? 'FAIL ' + fail : 'PASS ' + pass;
 document.body.textContent = (fail ? 'FAILED ' + fail : 'ALL OK') + ' — pass ' + pass + (window.__log || []).join(' | ');

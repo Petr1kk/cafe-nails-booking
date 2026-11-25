@@ -283,10 +283,10 @@ function apiConfig_() {
 function apiSlots_(p) {
   var cfg = getSettings_();
   if (!cfg.accepting) return { ok: true, accepting: false, days: {} };
-  var service = findService_(p.service);
+  var service = CORE.combineServices(getServices_(), p.service);   // можно несколько услуг сразу: 's1,s3'
   if (!service) return { ok: false, error: 'VALIDATION' };
   var masterId = String(p.master || 'any');
-  var cacheKey = 'slots_' + service.id + '_' + masterId, cache = CacheService.getScriptCache(), cached = cache.get(cacheKey);
+  var cacheKey = 'slots_' + slotsVersion_() + '_' + service.ids + '_' + masterId, cache = CacheService.getScriptCache(), cached = cache.get(cacheKey);
   if (cached) return JSON.parse(cached);
   var masters = getMasters_(), now = nowLocal_(), days = CORE.availableDays(cfg, now);
   var all = allBusy_(masters, days[0], days[days.length - 1]), out = {};
@@ -295,16 +295,9 @@ function apiSlots_(p) {
   cache.put(cacheKey, JSON.stringify(res), 20);
   return res;
 }
-function clearSlotsCache_() {
-  var cache = CacheService.getScriptCache(), keys = [];
-  getServices_().forEach(function (s) { ['any'].concat(getMasters_().map(function (m) { return m.id; })).forEach(function (m) { keys.push('slots_' + s.id + '_' + m); }); });
-  cache.removeAll(keys);
-}
-function findService_(id) {
-  var list = getServices_();
-  for (var i = 0; i < list.length; i++) if (list[i].id === String(id)) return list[i];
-  return null;
-}
+/** Кеш свободного времени «протухает» сам за 20 секунд; после записи/отмены меняем номер версии, и все старые ответы перестают подходить. */
+function slotsVersion_() { return CacheService.getScriptCache().get('slotsVer') || '0'; }
+function clearSlotsCache_() { CacheService.getScriptCache().put('slotsVer', String(Date.now()), 600); }
 
 function apiBooking_(token) {
   token = String(token || '');
@@ -328,7 +321,7 @@ function apiBook_(p) {
   if (!cfg.accepting) return { ok: false, error: 'CLOSED' };
   var v = CORE.validateClient(p);
   if (!v.ok) return { ok: false, error: 'VALIDATION', fields: v.errors };
-  var c = v.clean, day = String(p.day || ''), time = String(p.time || ''), service = findService_(p.service);
+  var c = v.clean, day = String(p.day || ''), time = String(p.time || ''), service = CORE.combineServices(getServices_(), p.service);
   if (!service || !CORE.validDay(day) || !/^\d{2}:\d{2}$/.test(time)) return { ok: false, error: 'TAKEN' };
   if (p.website) return fakeBooking_(day, time, service, '');                // скрытое поле: так заполняют только боты
   if (!(Number(p.elapsedMs) >= 3000)) return fakeBooking_(day, time, service, '');   // форма заполнена быстрее 3 секунд

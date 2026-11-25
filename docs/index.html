@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Запис на манікюр</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,16 +27,17 @@
 
     <!-- Крок 1: послуга і майстер -->
     <section id="step1" hidden>
-      <h2>Що робимо?</h2>
+      <h2>Що робимо? <small>можна обрати кілька</small></h2>
       <div id="services" class="list"></div>
       <h2>До кого?</h2>
       <div id="masters" class="chips"></div>
+      <div id="total" class="total"></div>
       <button id="to2" class="primary" disabled>Далі</button>
     </section>
 
     <!-- Крок 2: дата і час -->
     <section id="step2" hidden>
-      <button class="back" data-back="1">← Назад</button>
+      <button class="back" data-back="1"><span>←</span> Назад</button>
       <div id="summary2" class="note"></div>
       <h2>Оберіть день</h2>
       <div id="days" class="chips scroll"></div>
@@ -45,7 +49,7 @@
 
     <!-- Крок 3: дані -->
     <section id="step3" hidden>
-      <button class="back" data-back="2">← Назад</button>
+      <button class="back" data-back="2"><span>←</span> Назад</button>
       <div id="summary3" class="note"></div>
       <form id="form" novalidate>
         <label>Ім’я<input id="f-name" autocomplete="name" maxlength="60"><span class="fe" id="e-name"></span></label>

@@ -18,7 +18,7 @@
     TIMEOUT: 'Сервер відповідає надто довго. Спробуйте ще раз.'
   };
 
-  var state = { cfg: null, service: null, master: 'any', days: {}, day: null, time: null, openedAt: 0 };
+  var state = { cfg: null, selected: [], service: null, master: 'any', days: {}, day: null, time: null, openedAt: 0 };
 
   /* ---------- Связь с сервером ---------- */
   var api = DEMO ? window.DEMO_API : realApi();
@@ -66,6 +66,12 @@
     return { wd: WD[dt.getDay()], n: dt.getDate(), mon: MON[dt.getMonth()] };
   }
   function longDay(d) { var x = prettyDay(d); return x.wd + ', ' + x.n + ' ' + x.mon; }
+  function fmtDur(min) {
+    var h = Math.floor(min / 60), m = min % 60;
+    return (h ? h + ' год' : '') + (h && m ? ' ' : '') + (m ? m + ' хв' : '');
+  }
+  /** Выбранные услуги → одна «составная» (общее время и цена); та же функция считает и на сервере. */
+  function combined() { return CORE.combineServices(state.cfg.services, state.selected.join(',')); }
   function masterLabel(id) {
     if (id === 'any') return 'будь-який майстер';
     var m = state.cfg.masters.filter(function (x) { return x.id === id; })[0];
@@ -78,7 +84,7 @@
     $('#title').textContent = c.title; $('#subtitle').textContent = c.subtitle || '';
     document.title = c.title;
     $('#services').innerHTML = c.services.map(function (s) {
-      return '<button class="opt" data-id="' + esc(s.id) + '"><span>' + esc(s.name) + '<small>' + s.durationMin + ' хв</small></span><span class="price">' + s.price + ' ₴</span></button>';
+      return '<button class="opt" data-id="' + esc(s.id) + '"><span class="chk"></span><span class="nm">' + esc(s.name) + '<small>' + s.durationMin + ' хв</small></span><span class="price">' + s.price + ' ₴</span></button>';
     }).join('');
     var ms = [{ id: 'any', name: 'Будь-який' }].concat(c.masters);
     $('#masters').innerHTML = ms.map(function (m) {
@@ -86,10 +92,13 @@
     }).join('');
     $('#services').onclick = function (e) {
       var b = e.target.closest('.opt'); if (!b) return;
-      state.service = c.services.filter(function (s) { return s.id === b.dataset.id; })[0];
-      document.querySelectorAll('#services .opt').forEach(function (x) { x.classList.toggle('sel', x === b); });
-      $('#to2').disabled = false;
+      var id = b.dataset.id, i = state.selected.indexOf(id);
+      if (i >= 0) state.selected.splice(i, 1);
+      else if (state.selected.length < 4) state.selected.push(id);
+      b.classList.toggle('sel', state.selected.indexOf(id) >= 0);
+      updateTotal();
     };
+    updateTotal();
     $('#masters').onclick = function (e) {
       var b = e.target.closest('.chip'); if (!b) return;
       state.master = b.dataset.id;
@@ -98,11 +107,18 @@
     show('step1');
   }
 
+  function updateTotal() {
+    var sv = state.selected.length ? combined() : null;
+    $('#to2').disabled = !sv;
+    $('#total').textContent = sv ? sv.durationMin ? 'Разом: ' + fmtDur(sv.durationMin) + ' · ' + sv.price + ' ₴' : '' : 'Можна обрати кілька послуг';
+  }
+
   /* ---------- Крок 2: день и время ---------- */
   function goStep2() {
+    state.service = combined();
     state.day = null; state.time = null; $('#to3').disabled = true;
     loading(true);
-    api.slots(state.service.id, state.master).then(function (r) {
+    api.slots(state.service.ids, state.master).then(function (r) {
       if (!r.ok) { loading(false); return fail(r.error); }
       if (!r.accepting) { loading(false); return fail('CLOSED'); }
       state.days = r.days;
@@ -110,7 +126,7 @@
     });
   }
   function renderStep2() {
-    $('#summary2').innerHTML = esc(state.service.name) + ' · ' + state.service.durationMin + ' хв · ' + state.service.price + ' ₴ · ' + esc(masterLabel(state.master));
+    $('#summary2').innerHTML = esc(state.service.name) + '<br>' + fmtDur(state.service.durationMin) + ' · ' + state.service.price + ' ₴ · ' + esc(masterLabel(state.master));
     var free = Object.keys(state.days).sort().filter(function (d) { return state.days[d].length; });
     $('#nodays').hidden = free.length > 0;
     $('#days').innerHTML = free.map(function (d) {
@@ -151,7 +167,7 @@
   $('#form').addEventListener('submit', function (e) {
     e.preventDefault();
     var data = {
-      service: state.service.id, master: state.master, day: state.day, time: state.time,
+      service: state.service.ids, master: state.master, day: state.day, time: state.time,
       name: $('#f-name').value, phone: $('#f-phone').value, email: $('#f-email').value, comment: $('#f-comment').value,
       website: $('#f-website').value, elapsedMs: Date.now() - state.openedAt
     };
