@@ -55,6 +55,12 @@ h2 small { font-family: "Manrope", sans-serif; font-size: 12px; font-weight: 400
 .primary.danger { background: #c4584a; color: #fff; }
 .secondary { background: var(--card-2); color: var(--rose); border: 1.5px solid var(--line); }
 
+/* Предупреждение «слишком много услуг» */
+.warn { margin-top: 14px; padding: 14px; border: 1.5px solid #c9954f; background: rgba(201, 149, 79, .12); border-radius: 14px; font-size: 14px; }
+.warn .alt { display: block; width: 100%; margin-top: 10px; padding: 12px 14px; text-align: left; background: var(--card-2); border: 1.5px solid var(--rose-d); border-radius: 12px; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+.warn .alt:hover { background: #3a2340; }
+.warn .alt small { display: block; margin-top: 3px; font-weight: 400; color: var(--mute); }
+
 /* Кнопка «Назад» — заметная, как настоящая кнопка */
 .back { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 6px; padding: 10px 18px; background: var(--card-2); border: 1.5px solid var(--rose-d); border-radius: 12px; color: var(--rose); font: inherit; font-weight: 700; cursor: pointer; }
 .back:hover { background: #3a2340; }

@@ -122,8 +122,17 @@ var CORE = (function () {
   }
 
   /** Что можно показывать на сайте (без календарей и почты мастеров). */
+  /** Самое длинное непрерывное окно мастера в минутах (обед делит день на две части). */
+  function maxBlockMin(m) {
+    var whole = m.end - m.start;
+    if (!(m.lunchEnd > m.lunchStart)) return whole;
+    var a = Math.max(0, Math.min(m.lunchStart, m.end) - m.start);
+    var b = Math.max(0, m.end - Math.max(m.lunchEnd, m.start));
+    return Math.max(a, b);
+  }
+
   function publicMasters(masters) {
-    return masters.map(function (m) { return { id: m.id, name: m.name }; });
+    return masters.map(function (m) { return { id: m.id, name: m.name, maxBlockMin: maxBlockMin(m) }; });
   }
 
   /* ---------- Даты ---------- */
@@ -238,7 +247,7 @@ var CORE = (function () {
 
   return {
     DEFAULTS: DEFAULTS, parseSettings: parseSettings, parseMasters: parseMasters, parseServices: parseServices,
-    publicMasters: publicMasters, combineServices: combineServices, fmt: fmt, hm: hm, isoWeekday: isoWeekday, addDays: addDays, validDay: validDay,
+    publicMasters: publicMasters, maxBlockMin: maxBlockMin, combineServices: combineServices, fmt: fmt, hm: hm, isoWeekday: isoWeekday, addDays: addDays, validDay: validDay,
     availableDays: availableDays, masterFree: masterFree, freeTimes: freeTimes, pickMaster: pickMaster,
     normalizePhone: normalizePhone, formatPhone: formatPhone, cleanText: cleanText, sanitizeCell: sanitizeCell,
     escapeHtml: escapeHtml, validateClient: validateClient, decideAttempt: decideAttempt

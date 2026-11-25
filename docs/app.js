@@ -18,7 +18,7 @@
     TIMEOUT: 'Сервер відповідає надто довго. Спробуйте ще раз.'
   };
 
-  var state = { cfg: null, selected: [], service: null, master: 'any', days: {}, day: null, time: null, openedAt: 0 };
+  var state = { cfg: null, selected: [], rest: [], service: null, master: 'any', days: {}, day: null, time: null, openedAt: 0 };
 
   /* ---------- Связь с сервером ---------- */
   var api = DEMO ? window.DEMO_API : realApi();
@@ -84,7 +84,7 @@
     $('#title').textContent = c.title; $('#subtitle').textContent = c.subtitle || '';
     document.title = c.title;
     $('#services').innerHTML = c.services.map(function (s) {
-      return '<button class="opt" data-id="' + esc(s.id) + '"><span class="chk"></span><span class="nm">' + esc(s.name) + '<small>' + s.durationMin + ' хв</small></span><span class="price">' + s.price + ' ₴</span></button>';
+      return '<button class="opt' + (state.selected.indexOf(s.id) >= 0 ? ' sel' : '') + '" data-id="' + esc(s.id) + '"><span class="chk"></span><span class="nm">' + esc(s.name) + '<small>' + s.durationMin + ' хв</small></span><span class="price">' + s.price + ' ₴</span></button>';
     }).join('');
     var ms = [{ id: 'any', name: 'Будь-який' }].concat(c.masters);
     $('#masters').innerHTML = ms.map(function (m) {
@@ -96,22 +96,75 @@
       if (i >= 0) state.selected.splice(i, 1);
       else if (state.selected.length < 4) state.selected.push(id);
       b.classList.toggle('sel', state.selected.indexOf(id) >= 0);
+      state.rest = [];
       updateTotal();
     };
     updateTotal();
     $('#masters').onclick = function (e) {
       var b = e.target.closest('.chip'); if (!b) return;
-      state.master = b.dataset.id;
-      document.querySelectorAll('#masters .chip').forEach(function (x) { x.classList.toggle('sel', x === b); });
+      setMaster(b.dataset.id);
     };
     show('step1');
   }
 
-  function updateTotal() {
-    var sv = state.selected.length ? combined() : null;
-    $('#to2').disabled = !sv;
-    $('#total').textContent = sv ? sv.durationMin ? 'Разом: ' + fmtDur(sv.durationMin) + ' · ' + sv.price + ' ₴' : '' : 'Можна обрати кілька послуг';
+  function setMaster(id) {
+    state.master = id;
+    document.querySelectorAll('#masters .chip').forEach(function (x) { x.classList.toggle('sel', x.dataset.id === id); });
+    updateTotal();
   }
+  function svcOf(ids) { return ids.length ? CORE.combineServices(state.cfg.services, ids.join(',')) : null; }
+  /** Самое длинное окно у мастера (или у любого из них). Если сервер его не прислал — ограничения нет. */
+  function limitFor(masterId) {
+    var best = 0, known = false;
+    state.cfg.masters.forEach(function (m) {
+      if (typeof m.maxBlockMin !== 'number') return;
+      known = true;
+      if ((masterId === 'any' || m.id === masterId) && m.maxBlockMin > best) best = m.maxBlockMin;
+    });
+    return known ? best : Infinity;
+  }
+  /** Оставляем услуги по порядку выбора, пока влезают в окно; остальное — на отдельный визит. */
+  function splitToFit(max) {
+    var keep = [], rest = [], sum = 0;
+    state.selected.forEach(function (id) {
+      var d = svcOf([id]).durationMin;
+      if (sum + d <= max) { keep.push(id); sum += d; } else rest.push(id);
+    });
+    return { keep: keep, rest: rest };
+  }
+  function updateTotal() {
+    var sv = svcOf(state.selected), warn = $('#warn'), max = limitFor(state.master);
+    var tooLong = !!sv && sv.durationMin > max;
+    warn.hidden = !tooLong;
+    $('#to2').disabled = !sv || tooLong;
+    if (tooLong) {
+      var sp = splitToFit(max), kept = svcOf(sp.keep), anyMax = limitFor('any'), html;
+      html = '<b>Це забагато для одного візиту.</b> Обрані послуги займають ' + fmtDur(sv.durationMin) +
+        ', а найдовше вільне вікно ' + (state.master === 'any' ? 'у майстрів' : 'у цього майстра') + ' — ' + fmtDur(max) + '. Що можна зробити:';
+      if (kept) html += '<button class="alt" data-act="fit">Залишити: ' + esc(kept.name) + ' (' + fmtDur(kept.durationMin) + ')<small>Решту (' + esc(svcOf(sp.rest).name) + ') запишете окремим візитом одразу після цього</small></button>';
+      if (state.master !== 'any' && sv.durationMin <= anyMax) html += '<button class="alt" data-act="any">Обрати «Будь-який майстер»<small>У іншого майстра довше вікно — усе влізе в один візит</small></button>';
+      html += '<button class="alt" data-act="call">Зателефонувати нам<small>Дуже довгі набори краще узгодити з майстром</small></button>';
+      warn.innerHTML = html;
+    }
+    var t = $('#total');
+    if (!sv) t.textContent = 'Можна обрати кілька послуг';
+    else if (tooLong) t.textContent = '';
+    else {
+      t.textContent = 'Разом: ' + fmtDur(sv.durationMin) + ' · ' + sv.price + ' ₴';
+      if (state.rest.length) t.textContent += ' · решту (' + svcOf(state.rest).name + ') запишемо окремим візитом';
+    }
+  }
+  $('#warn').onclick = function (e) {
+    var b = e.target.closest('.alt'); if (!b) return;
+    var act = b.dataset.act;
+    if (act === 'fit') {
+      var sp = splitToFit(limitFor(state.master));
+      state.selected = sp.keep; state.rest = sp.rest;
+      document.querySelectorAll('#services .opt').forEach(function (x) { x.classList.toggle('sel', state.selected.indexOf(x.dataset.id) >= 0); });
+      updateTotal();
+    } else if (act === 'any') setMaster('any');
+    else if (act === 'call') alert('Зателефонуйте нам — підберемо час під великий набір послуг.');
+  };
 
   /* ---------- Крок 2: день и время ---------- */
   function goStep2() {
@@ -193,12 +246,20 @@
     $('#doneInfo').innerHTML = esc(b.service) + '<br><b>' + esc(longDay(b.day)) + ', ' + esc(b.time) + '</b><br>Майстер: ' + esc(b.master);
     var link = location.origin + location.pathname + '?cancel=' + encodeURIComponent(b.token);
     $('#cancelLink').value = link;
+    var rs = svcOf(state.rest);
+    $('#restBtn').hidden = !rs;
+    if (rs) $('#restBtn').textContent = 'Записати решту: ' + rs.name;
     show('done');
   }
   $('#copy').onclick = function () {
     var el = $('#cancelLink'); el.select();
     try { (navigator.clipboard ? navigator.clipboard.writeText(el.value) : Promise.reject()).catch(function () { document.execCommand('copy'); }); } catch (e) { document.execCommand('copy'); }
     $('#copy').textContent = 'Скопійовано ✓';
+  };
+  $('#restBtn').onclick = function () {
+    state.selected = state.rest.slice(); state.rest = [];
+    state.day = null; state.time = null;
+    renderStep1();
   };
   $('#again').onclick = function () { location.href = location.pathname; };
 

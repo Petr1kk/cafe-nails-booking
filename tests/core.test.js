@@ -13,7 +13,7 @@ const masters = CORE.parseMasters([
 const now = { day: '2026-12-01', min: 8 * 60 }; // вівторок 08:00
 
 t('мастера разобраны', masters.length, 2);
-t('календарь не уходит на сайт', CORE.publicMasters(masters), [{ id: 'm1', name: 'Марія' }, { id: 'm2', name: 'Олена' }]);
+t('календарь и почта мастера не уходят на сайт', CORE.publicMasters(masters), [{ id: 'm1', name: 'Марія', maxBlockMin: 240 }, { id: 'm2', name: 'Олена', maxBlockMin: 540 }]);
 
 // Марія, вівторок, 60 хв: обід 14:00–15:00 пропускаем
 const m1 = CORE.masterFree(masters[0], cfg, 60, '2026-12-02', [], now).map(CORE.fmt);
@@ -86,5 +86,11 @@ t('пустой выбор', CORE.combineServices(sv, ''), null);
 t('повторы убираются', CORE.combineServices(sv, 's1,s1').durationMin, 60);
 t('больше 4 нельзя', CORE.combineServices(sv, 's1,s2,s3,s1x,s9'), null);
 
+// --- самое длинное окно мастера (для предупреждения «слишком много услуг») ---
+t('maxBlockMin: обед делит день', CORE.maxBlockMin({ start: 600, end: 1140, lunchStart: 840, lunchEnd: 900 }), 240);
+t('maxBlockMin: без обеда весь день', CORE.maxBlockMin({ start: 660, end: 1200, lunchStart: 0, lunchEnd: 0 }), 540);
+t('publicMasters отдаёт maxBlockMin', CORE.publicMasters(masters).map(function (m) { return m.maxBlockMin; }), [240, 540]);
+
 document.title = fail ? 'FAIL ' + fail : 'PASS ' + pass;
 document.body.textContent = (fail ? 'FAILED ' + fail : 'ALL OK') + ' — pass ' + pass + (window.__log || []).join(' | ');
+
