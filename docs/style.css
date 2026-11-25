@@ -1,10 +1,11 @@
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; color-scheme: dark; }
 :root {
   --bg: #130c15; --card: rgba(34, 22, 36, .86); --card-2: #2a1b2d; --line: #46304a;
   --rose: #e39ab4; --rose-d: #c9758f; --ink: #f6e9ee; --mute: #b59ba6; --gold: #e8c9a0;
 }
 body {
-  margin: 0; min-height: 100vh; color: var(--ink); line-height: 1.45;
+  margin: 0; padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); -webkit-tap-highlight-color: transparent; min-height: 100vh; color: var(--ink); line-height: 1.45;
   font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   background:
     radial-gradient(900px 500px at 12% -5%, rgba(214, 108, 150, .32), transparent 60%),
@@ -75,3 +76,71 @@ input.bad { border-color: #e0685a; }
 #cancelLink { text-align: center; font-size: 13px; }
 .foot { text-align: center; font-size: 12px; color: var(--mute); padding-bottom: 24px; }
 .chips.scroll { scrollbar-color: var(--rose-d) transparent; scrollbar-width: thin; }
+
+/* ================= Адаптация под все экраны ================= */
+img, svg { max-width: 100%; }
+.hero h1 { font-size: clamp(26px, 5vw + 12px, 44px); }
+.hero { padding: clamp(24px, 5vw, 56px) 16px clamp(8px, 2vw, 20px); }
+.hero p { font-size: clamp(14px, 1.2vw + 11px, 18px); padding: 0 8px; }
+.card { width: calc(100% - 24px); }
+button, .opt, .chip, .time { touch-action: manipulation; }
+button:focus-visible, .opt:focus-visible, .chip:focus-visible, .time:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.opt .nm, .note, h2 { overflow-wrap: anywhere; }
+
+/* Тачскрины: крупные зоны нажатия */
+@media (hover: none) and (pointer: coarse) {
+  .opt { min-height: 56px; } .chip { min-height: 44px; } .time { min-height: 46px; } .back { min-height: 44px; }
+  .opt:hover, .back:hover { border-color: var(--line); background: var(--card-2); }
+  .opt.sel:hover { border-color: var(--rose); background: #3a2340; }
+}
+
+/* Очень маленькие телефоны (до 360 px) */
+@media (max-width: 360px) {
+  .card { width: calc(100% - 16px); padding: 14px 12px 20px; border-radius: 16px; }
+  .times { grid-template-columns: repeat(3, 1fr); }
+  .opt { padding: 11px 10px; gap: 9px; } .opt .price { font-size: 14px; }
+  .chip { padding: 8px 13px; font-size: 14px; }
+  .steps li { font-size: 11px; }
+}
+
+/* Телефон в горизонтальном положении (мало высоты) */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero { padding: 12px 16px 4px; } .hero h1 { font-size: 24px; } .hero p { display: none; }
+  .times { grid-template-columns: repeat(6, 1fr); }
+  .card { margin-top: 8px; }
+}
+
+/* Планшет (от 600 px) */
+@media (min-width: 600px) {
+  .card { max-width: 680px; padding: 26px 28px 30px; border-radius: 24px; }
+  h2 { font-size: 21px; }
+  .times { grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .opt { padding: 15px 18px; }
+  .steps li { font-size: 13px; }
+  .primary, .secondary { max-width: 360px; margin-left: auto; margin-right: auto; }
+}
+
+/* Ноутбук / ПК / Mac (от 960 px) */
+@media (min-width: 960px) {
+  .card { max-width: 860px; padding: 34px 40px 40px; }
+  h2 { font-size: 23px; margin-top: 26px; }
+  #services { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .times { grid-template-columns: repeat(6, 1fr); }
+  .chips.scroll { flex-wrap: wrap; overflow: visible; }
+  .chip.day { min-width: 72px; }
+  .opt, .chip, .time { transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
+  .opt:hover, .chip:hover, .time:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+  .primary:not(:disabled):hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .back, .primary, .secondary { transition: background .15s, filter .15s, transform .15s; }
+}
+
+/* Большие мониторы (от 1500 px) */
+@media (min-width: 1500px) {
+  body { font-size: 18px; }
+  .card { max-width: 980px; }
+  .times { grid-template-columns: repeat(7, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; transform: none !important; }
+}
