@@ -129,6 +129,9 @@
     $('#summary2').innerHTML = esc(state.service.name) + '<br>' + fmtDur(state.service.durationMin) + ' · ' + state.service.price + ' ₴ · ' + esc(masterLabel(state.master));
     var free = Object.keys(state.days).sort().filter(function (d) { return state.days[d].length; });
     $('#nodays').hidden = free.length > 0;
+    $('#nodays').textContent = state.service.durationMin >= 240
+      ? 'На такий набір послуг потрібно ' + fmtDur(state.service.durationMin) + ' — це не вміщається в один робочий день майстра. Оберіть менше послуг (їх можна розділити на два візити) або зателефонуйте нам.'
+      : 'Найближчим часом вільних місць немає. Спробуйте іншого майстра або зателефонуйте нам.';
     $('#days').innerHTML = free.map(function (d) {
       var x = prettyDay(d);
       return '<button class="chip day" data-d="' + d + '"><small>' + x.wd + '</small><b>' + x.n + '</b><small>' + x.mon + '</small></button>';
